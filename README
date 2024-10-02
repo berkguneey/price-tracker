@@ -1,0 +1,55 @@
+# Price Tracker
+
+Price Tracker is a Node.js application that automatically collects product prices and seller information from a specified website. This application uses Puppeteer to scrape web pages and gather product information.
+
+## Features
+
+- Collects product names, prices, and seller information from detail pages.
+- Opens a specified number of pages simultaneously to optimize performance.
+- Uses a proxy server to hide your IP address.
+
+## Requirements
+
+- Node.js (v14 or higher)
+- npm (Node Package Manager)
+- Docker (for containerization)
+- Docker Compose (for orchestration)
+
+## Installation
+
+1. Clone or download this project:
+
+   ```bash
+   git clone https://github.com/berkguneey/price-tracker.git
+   cd price-tracker
+   ```
+
+2. Install the required dependencies:
+
+   ```bash
+   npm install
+   ```
+
+## Usage
+
+### Running with Node.js
+
+1. Run the application:
+
+   ```bash
+   node index.js
+   ```
+
+### Running with Docker Compose
+
+1. Build and start the application using Docker Compose:
+
+   ```bash
+   docker-compose up -d
+   ```
+
+2. The application will be running in the background. You can check the logs to see the scraping progress:
+
+   ```bash
+   docker-compose logs -f
+   ```

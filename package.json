@@ -1,0 +1,46 @@
+{
+  "name": "price-tracker",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [
+    "price",
+    "tracker",
+    "scraper",
+    "puppeteer",
+    "nodejs"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "PriceTracker is an application that allows users to automatically collect and compare prices for a specific product from various e-commerce websites. After the user enters the product name, the application retrieves the product's price information from the relevant websites and returns the price-store details to the client.",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "mongoose": "^8.7.0",
+    "node-cron": "^3.0.3",
+    "puppeteer": "^23.4.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-proxy": "^1.0.2",
+    "winston": "^3.14.2",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.7"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "./coverage",
+    "collectCoverage": true,
+    "collectCoverageFrom": [
+      "services/**/*.js",
+      "!**/node_modules/**"
+    ]
+  }
+}
