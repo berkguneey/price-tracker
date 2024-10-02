@@ -9,7 +9,7 @@ const config = require('./config/config');
 const logger = require('./config/logger');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 /**
  * @function connectDB

@@ -1,55 +1,78 @@
-# Price Tracker
+# PriceTracker
 
-Price Tracker is a Node.js application that automatically collects product prices and seller information from a specified website. This application uses Puppeteer to scrape web pages and gather product information.
+PriceTracker is an application that allows users to automatically collect and compare prices for a specific product from various e-commerce websites. After the user enters the product name, the application retrieves the product's price information from the relevant websites and returns the price-store details to the client.
 
 ## Features
 
-- Collects product names, prices, and seller information from detail pages.
-- Opens a specified number of pages simultaneously to optimize performance.
-- Uses a proxy server to hide your IP address.
-
-## Requirements
-
-- Node.js (v14 or higher)
-- npm (Node Package Manager)
-- Docker (for containerization)
-- Docker Compose (for orchestration)
+- **Product Scraping**: Automatically scrape product details from various e-commerce websites.
+- **Price Comparison**: Compare prices of the same product from different sellers.
+- **Cron Job**: Schedule scraping tasks to run at regular intervals.
+- **Logging**: Detailed logging of application activities.
 
 ## Installation
 
-1. Clone or download this project:
+1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/berkguneey/price-tracker.git
+   git clone https://github.com/yourusername/price-tracker.git
    cd price-tracker
    ```
 
-2. Install the required dependencies:
+2. **Install dependencies**:
 
    ```bash
    npm install
    ```
 
+3. **Set up environment variables**:
+   Create a `.env` file in the root directory and add the following:
+   ```env
+   PORT=3000
+   MONGODB_URI=mongodb://mongo:mongo@mongodb:27017
+   MONGODB_DATABASE=pricetracker
+   ```
+
 ## Usage
 
-### Running with Node.js
+### Running the application
 
-1. Run the application:
-
-   ```bash
-   node index.js
-   ```
-
-### Running with Docker Compose
-
-1. Build and start the application using Docker Compose:
+1. **Start the application**:
 
    ```bash
-   docker-compose up -d
+   npm start
    ```
 
-2. The application will be running in the background. You can check the logs to see the scraping progress:
-
+2. **Development mode**:
    ```bash
-   docker-compose logs -f
+   npm run dev
    ```
+
+### Using Docker
+
+1. **Build and run the Docker containers**:
+   ```bash
+   docker-compose up --build
+   ```
+
+## API Endpoints
+
+- **GET /api/productsSortedByPrice**: Retrieves all products from the database sorted by price in ascending order.
+
+## Project Structure
+
+- **index.js**: Entry point of the application.
+- **routes/productRoutes.js**: Defines the routes for product-related API endpoints.
+- **controllers/productController.js**: Contains the logic for handling product-related requests.
+- **services/scraperService.js**: Contains the logic for scraping product details from e-commerce websites.
+- **services/productService.js**: Contains the logic for interacting with the product database.
+- **models/Product.js**: Defines the schema for the product model.
+- **config/db.js**: Contains the logic for connecting to the MongoDB database.
+- **config/logger.js**: Configures the logging system using Winston.
+
+## Logging
+
+The application uses Winston for logging. Logs are stored in the `logs` directory and rotated daily.
+
+## License
+
+This project is licensed under the MIT License.
