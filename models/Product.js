@@ -19,6 +19,13 @@ const ProductSchema = new mongoose.Schema({
   name: { type: String, required: true },
 
   /** 
+   * The creation date of the product.
+   * @type {Date}
+   * @default
+   */
+  createdAt: { type: Date, default: Date.now },
+
+  /** 
    * The price of the product.
    * @type {String}
    * @required

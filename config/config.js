@@ -22,10 +22,10 @@ const config = {
             searchUrl: "https://www.hepsiburada.com/ara?q=macbook+air+m2",
             selectors: {
                 productList: 'ul.productListContent-frGrtf5XrVXRwJ05HUfU div.moria-ProductCard-joawUM',
-                productName: '.moria-ProductCard-bBDoAL',
-                productPrice: '.moria-ProductCard-fHiOwt',
+                productName: '.moria-ProductCard-gLyfvY',
+                productPrice: '.moria-ProductCard-kEwjUF',
                 productDetailUrl: 'a',
-                seller: '.W5OUPzvBGtzo9IdLz4Li',
+                seller: '.rzVCX6O5Vz9bkKB61N2W',
             },
         },
         trendyol: {

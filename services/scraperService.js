@@ -2,6 +2,19 @@ const puppeteer = require('puppeteer');
 const Product = require('../models/Product');
 const logger = require('../config/logger');
 
+const userAgentList = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.110 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.110 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:110.0) Gecko/20100101 Firefox/110.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7; rv:110.0) Gecko/20100101 Firefox/110.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.110 Safari/537.36 Edg/114.0.1823.43'
+];
+
+const getRandomUserAgent = () => {
+    return userAgentList[Math.floor(Math.random() * userAgentList.length)];
+};
+
 /**
  * Initializes a Puppeteer browser and page with the specified settings.
  * 
@@ -11,18 +24,13 @@ const logger = require('../config/logger');
  */
 const initializeBrowser = async () => {
     const browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         args: [
-            '--window-size=800,600', // Lower resolution
-            '--proxy-server=156.253.170.185:3128'
+            '--window-size=800,600' // Lower resolution
+            // '--proxy-server=209.200.246.243:9595'
         ]
     });
     const page = await browser.newPage();
-    await page.setExtraHTTPHeaders({
-        'User-Agent': 'Chrome',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br'
-    });
     await page.setRequestInterception(true);
     page.on('request', (request) => {
         const resourceType = request.resourceType();
@@ -36,6 +44,31 @@ const initializeBrowser = async () => {
 };
 
 /**
+ * Evaluates the page to determine if human verification is required.
+ * Checks for the presence of a captcha input field or text indicating verification.
+ *
+ * @async
+ * @function checkForCaptcha
+ * @param {Object} page - The Puppeteer page instance.
+ * @param {Object} browser - The Puppeteer browser instance.
+ * @returns {Promise<boolean>} A promise that resolves to true if human verification is detected, otherwise false.
+ */
+const checkForCaptcha = async (page, browser) => {
+    const isHumanVerify = await page.evaluate(() => {
+        const captchaInput = document.querySelector('input[name="captcha"]');
+        const verifyText = Array.from(document.querySelectorAll('*')).some(el => el.innerText && el.innerText.includes('Verifying'));
+        return captchaInput !== null || verifyText;
+    });
+
+    if (isHumanVerify) {
+        logger.warn('Human verification detected. Aborting scraping process.');
+        await browser.close();
+        return true;
+    }
+    return false;
+};
+
+/**
  * Scrapes products from the specified site.
  * 
  * @async
@@ -43,21 +76,41 @@ const initializeBrowser = async () => {
  * @param {Object} site - The site configuration object containing URLs and selectors.
  * @returns {Promise<void>}
  */
-const scrapeProducts = async (site) => {
-    const { browser, page } = await initializeBrowser();
+const scrapeProducts = async (site, retries = 3) => {
     logger.info(`Scraping process started: ${site.baseUrl}`);
-    try {
-        await page.goto(site.searchUrl, { waitUntil: 'networkidle2' });
+    let attempt = 0;
 
-        const productElements = await page.$$(site.selectors.productList);
-        const products = await Promise.all(productElements.map(element => scrapeProduct(element, site, browser)));
+    while (attempt < retries) {
+        try {
+            const { browser, page } = await initializeBrowser();
+            await page.setUserAgent(getRandomUserAgent());
+            await page.goto(site.searchUrl, { waitUntil: 'networkidle2' });
 
-        await saveProductsToDB(products);
-        logger.info(`Scraping process completed: ${site.baseUrl}`);
-    } catch (error) {
-        logger.error("Scraping error:", error);
-    } finally {
-        await browser.close();
+            const isHumanVerify = await checkForCaptcha(page, browser);
+            if (isHumanVerify) return;
+
+            const productElements = await page.$$(site.selectors.productList);
+
+            const pLimit = (await import('p-limit')).default;
+            const limit = pLimit(10);
+            const products = await Promise.all(
+                productElements.map(element => limit(() => scrapeProduct(element, site, browser)))
+            );
+
+            await saveProductsToDB(products);
+            logger.info(`Scraping process completed: ${site.baseUrl}`);
+            await browser.close();
+            return;
+        } catch (error) {
+            logger.error(`Scraping error on attempt ${attempt + 1}:`, error);
+            attempt++;
+            if (attempt === retries) {
+                logger.error('All attempts failed. Aborting...');
+            } else {
+                logger.log(`Retrying (${attempt}/${retries})...`);
+            }
+            await browser.close();
+        }
     }
 };
 
@@ -106,6 +159,8 @@ const scrapeProduct = async (element, site, browser) => {
  */
 const getSellerFromDetailPage = async (browser, url, site) => {
     const page = await browser.newPage();
+    await page.setUserAgent(getRandomUserAgent());
+
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
 
     const sellerElement = await page.$(site.selectors.seller);
@@ -124,7 +179,7 @@ const getSellerFromDetailPage = async (browser, url, site) => {
  * @returns {Promise<void>}
  */
 const saveProductsToDB = async (products) => {
-    Product.insertMany(products);
+    await Product.insertMany(products);
     logger.info(`${products.length} products saved to DB.`);
 };
 
