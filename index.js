@@ -7,13 +7,13 @@ const productRoutes = require('./routes/productRoutes');
 const { scrapeProducts } = require('./services/scraperService');
 const config = require('./config/config');
 const logger = require('./config/logger');
+const Product = require('./models/Product'); // Eksikti → eklendi
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 /**
- * @function connectDB
- * @description Establishes a connection to the MongoDB database.
+ * DB bağlantısı
  */
 connectDB();
 
@@ -21,35 +21,52 @@ connectDB();
 app.use(express.json());
 
 /**
- * @function productRoutes
- * @description Routes for product-related API endpoints.
+ * Ürün API endpointleri
  */
 app.use('/api', productRoutes);
 
 /**
- * @function cron.schedule
- * @description Schedules a cron job to scrape products every 6 hours.
- * This job clears the existing products in the database and initiates the scraping process for each site defined in the configuration.
+ * Scraping işlemini başlatan fonksiyon
  */
-cron.schedule('0 */6 * * *', async () => {
+const startScraping = async () => {
     try {
-        logger.info('Scraping process is starting...');
-        await Product.deleteMany({});
+        logger.info('Scraping started...');
+        await Product.deleteMany({}); // Eski ürünleri temizle
         const siteKeys = Object.keys(config.sites);
+
         for (const siteKey of siteKeys) {
             const site = config.sites[siteKey];
-            await scrapeProducts(site);
+            await scrapeProducts(site); // Her site için scraping işlemi
         }
-        logger.info('Scraping process completed.');
+
+        logger.info('Scraping completed.');
     } catch (error) {
         logger.error("Scraping error:", error);
+    }
+};
+
+/**
+ * Her 6 saatte bir scraping
+ */
+cron.schedule('0 */6 * * *', async () => {
+    await startScraping();
+});
+
+/**
+ * Scraping işlemini manuel başlatan endpoint
+ */
+app.get('/api/scrape', async (req, res) => {
+    try {
+        await startScraping();
+        res.status(200).json({ message: 'Scraping started successfully.' });
+    } catch (error) {
+        logger.error("Manual scraping error:", error);
+        res.status(500).json({ message: 'Scraping failed.', error: error.message });
     }
 });
 
 /**
- * @function app.listen
- * @description Starts the Express server and listens for incoming requests on the specified port.
- * @param {number} PORT - The port on which the server will listen.
+ * Express server
  */
 app.listen(PORT, () => {
     logger.info(`Server started on port ${PORT}.`);
